@@ -45,12 +45,14 @@ var exec = function(cmd, opts, callback) {
 		});
 	};
 
-	if (!key || Buffer.isBuffer(key)) return onkey();
-
-	fs.readFile(key, function(_, buffer) {
-		key = buffer;
+	if (!key || Buffer.isBuffer(key)) {
 		onkey();
-	});
+	} else {
+		fs.readFile(key, function(_, buffer) {
+			key = buffer;
+			onkey();
+		});
+	}
 
 	if (!callback) return output;
 
