@@ -1,0 +1,10 @@
+{
+  "name": "ssh-exec",
+  "version": "0.0.1",
+  "description": "Execute a script over ssh using Node.JS",
+  "repository": "git://github.com/mafintosh/ssh-exec.git",
+  "dependencies": {
+    "ssh2": "~0.2.14",
+    "stream-wrapper": "~0.1.2"
+  }
+}
