@@ -39,6 +39,7 @@ var exec = function(cmd, opts, callback) {
 			host: opts.host,
 			username: opts.user,
 			password: opts.password,
+			port: opts.port || 22,
 			privateKey: key
 		});
 	};
