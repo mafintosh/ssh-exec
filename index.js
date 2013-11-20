@@ -7,10 +7,11 @@ var HOME = process.env.HOME || process.env.USERPROFILE;
 
 var exec = function(cmd, opts, callback) {
 	if (typeof opts === 'string') {
-		opts = opts.match(/^(?:([^@]+)@)?(.+)$/) || [];
+		opts = opts.match(/^(?:([^@]+)@)?([^:]+)(?::(\d+))?$/) || [];
 		opts = {
 			host: opts[2],
-			user: opts[1]
+			user: opts[1],
+			port: parseInt(opts[3], 10) || 22
 		};
 	}
 
