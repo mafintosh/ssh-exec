@@ -54,7 +54,13 @@ var exec = function(cmd, opts, callback) {
 					return;
 				}
 
-				stream.pipe(output);
+				stream.on('data', function(data) { // ssh pause/resume seems to have an issue with BIG streams
+					output.write(data);
+				});
+
+				stream.on('end', function() {
+					output.end();
+				});
 
 				stream.on('close', function() {
 					output.end();
