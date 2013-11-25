@@ -56,6 +56,11 @@ var exec = function(cmd, opts, callback) {
 
 				stream.pipe(output);
 
+				stream.on('close', function() {
+					output.end();
+					output.emit('close');
+				});
+
 				stream.on('exit', function(code) {
 					conn.end();
 					output.emit('exit', code);
