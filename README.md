@@ -17,13 +17,12 @@ var exec = require('ssh-exec');
 
 exec('ls -lh', 'ubuntu@my-remote.com').pipe(process.stdout);
 
-// or using more settings
+// or using the more settings
 
 exec('ls -lh', {
 	user: 'ubuntu',
 	host: 'my-remote.com',
 	key: myKeyFileOrBuffer,
-	env: {TEST_VAR:'test'},
 	password: 'my-user-password'
 }).pipe(process.stdout);
 
