@@ -1,36 +1,111 @@
-var Connection = require('ssh2');
 var stream = require('stream-wrapper');
-var concat = require('concat-stream');
-var once = require('once');
-var path = require('path');
+var Connection = require('ssh2');
 var fs = require('fs');
+var path = require('path');
 
 var HOME = process.env.HOME || process.env.USERPROFILE;
 
-var buffer = function(stream, enc, callback) {
-	var result = undefined;
-	var exited = false;
+var noop = function() {};
 
-	callback = once(callback);
-	stream.pipe(concat(function(buffer) {
-		if (enc) buffer = buffer.toString(enc);
-		if (exited) return callback(null, buffer);
-		result = buffer;
-	}));
+var exec = function(cmd, opts) {
+	var c = new Connection();
+	var buffer = null;
+	var waiting = noop;
 
-	stream.on('error', callback);
-	stream.on('exit', function(code) {
-		if (code) {
-			var err = new Error('bad exit code');
-			err.code = code
-			return callback(err);
-		}
-		if (result !== undefined) return callback(null, result);
-		exited = true;
+	var duplex = stream.passThrough(noop, function(data, enc, callback) {
+		buffer = data;
+		waiting = callback;
 	});
+
+	c.on('ready', function() {
+		c.exec(cmd, {env:opts.env}, function(err, stdio) {
+			if (err) return c.emit('error', err);
+
+			var drained = true;
+			var update = function() {
+				if (!stdio.readable) return;
+				if (drained && stdio.paused) stdio.resume();
+				else if (!drained && !stdio.paused) stdio.pause();
+			};
+
+			duplex._read = function() {
+				drained = true;
+				process.nextTick(update);
+			};
+
+			duplex._write = function(data, enc, callback) {
+				if (stdio.write(data) !== false) return callback();
+				stdio.once('drain', callback);
+			};
+
+			duplex.on('finish', function() {
+				stdio.end();
+			});
+
+			stdio.on('data', function(data) {
+				if (duplex.push(data)) return;
+				drained = false;
+				process.nextTick(update);
+			});
+
+			stdio.on('end', function() {
+				duplex.push(null);
+			});
+
+			stdio.on('close', function() {
+				duplex.destroy();
+			});
+
+			stdio.on('exit', function(code) {
+				duplex.emit('exit', code);
+			});
+
+			if (!buffer) return;
+
+			duplex._write(buffer, null, waiting);
+			buffer = null;
+			waiting = noop;
+		});
+	});
+
+	c.on('error', function(err) {
+		duplex.emit('error', err);
+		duplex.destroy();
+	});
+
+	c.on('close', function() {
+		duplex.destroy();
+	});
+
+	duplex.on('close', function() {
+		c.end();
+	});
+
+	var key = opts.key === false ? undefined : opts.key || path.join(HOME, '.ssh', 'id_rsa');
+
+	var connect = function() {
+		c.connect({
+			host:opts.host,
+			username:opts.user,
+			password:opts.password,
+			port:opts.port || 22,
+			privateKey:key
+		});
+	};
+
+	if (!key || Buffer.isBuffer(key)) {
+		connect();
+	} else {
+		fs.readFile(key, function(_, buffer) {
+			key = buffer;
+			connect();
+		});
+	}
+
+	return duplex;
 };
 
-var exec = function(cmd, opts, callback) {
+module.exports = function(cmd, opts, callback) {
 	if (typeof opts === 'string') {
 		opts = opts.match(/^(?:([^@]+)@)?([^:]+)(?::(\d+))?$/) || [];
 		opts = {
@@ -40,66 +115,5 @@ var exec = function(cmd, opts, callback) {
 		};
 	}
 
-	var output = stream.passThrough();
-	var conn = new Connection();
-
-	var key = opts.key === false ? undefined : opts.key || path.join(HOME, '.ssh', 'id_rsa');
-
-	var onkey = function() {
-		conn.on('ready', function() {
-			conn.exec(cmd, {env:opts.env}, function(err, stream) {
-				if (err) {
-					conn.end();
-					output.emit('error', err);
-					return;
-				}
-
-				stream.on('data', function(data) { // ssh pause/resume seems to have an issue with BIG streams
-					output.write(data);
-				});
-
-				stream.on('end', function() {
-					output.end();
-				});
-
-				stream.on('close', function() {
-					output.end();
-					output.emit('close');
-				});
-
-				stream.on('exit', function(code) {
-					conn.end();
-					output.emit('exit', code);
-				});
-			});
-		});
-
-		conn.on('error', function(err) {
-			output.emit('error', err);
-		});
-
-		conn.connect({
-			host: opts.host,
-			username: opts.user,
-			password: opts.password,
-			port: opts.port || 22,
-			privateKey: key
-		});
-	};
-
-	if (!key || Buffer.isBuffer(key)) {
-		onkey();
-	} else {
-		fs.readFile(key, function(_, buffer) {
-			key = buffer;
-			onkey();
-		});
-	}
-
-	if (!callback) return output;
-
-	buffer(output, opts.encoding, callback);
-	return output;
+	return exec(cmd, opts);
 };
-
-module.exports = exec;
