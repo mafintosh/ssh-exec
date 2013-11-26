@@ -105,7 +105,7 @@ var exec = function(cmd, opts) {
 	return duplex;
 };
 
-module.exports = function(cmd, opts, callback) {
+module.exports = function(cmd, opts) {
 	if (typeof opts === 'string') {
 		opts = opts.match(/^(?:([^@]+)@)?([^:]+)(?::(\d+))?$/) || [];
 		opts = {
