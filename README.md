@@ -1,6 +1,6 @@
 # ssh-exec
 
-Execute a script over ssh using Node.JS
+Execute a script over ssh using Node.JS and pipe to and from it
 
 It is available through npm
 
@@ -27,12 +27,11 @@ exec('ls -lh', {
 	password: 'my-user-password'
 }).pipe(process.stdout);
 
-// or if you want to buffer the result
+// or if you want to pipe some data to the remote process
 
-exec('ls -lh', 'ubuntu@my-remote', function(err, output) {
-	if (err) return console.log('bad exit code: '+err.code);
-	console.log('output', output.toString())
-});
+process.stdin
+	.pipe(exec('echo try typing something; cat -', 'ubuntu@my-remote.com')
+	.pipe(process.stdout);
 ```
 
 ## License
