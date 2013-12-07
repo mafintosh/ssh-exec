@@ -31,6 +31,12 @@ exec('ls -lh', {
 process.stdin
 	.pipe(exec('echo try typing something; cat -', 'ubuntu@my-remote.com')
 	.pipe(process.stdout);
+
+// exec multiple commands using the same ssh connection
+
+var c = exec.connection('ubuntu@my-remote.com');
+exec('ls -lh', c).pipe(process.stdout);
+exec('ls -lh', c).pipe(process.stdout);
 ```
 
 ## License
