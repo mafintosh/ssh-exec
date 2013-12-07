@@ -7,19 +7,72 @@ var HOME = process.env.HOME || process.env.USERPROFILE;
 
 var noop = function() {};
 
-var exec = function(cmd, opts) {
+var parse = function(opts) {
+	if (typeof opts === 'string') {
+		opts = opts.match(/^(?:([^@]+)@)?([^:]+)(?::(\d+))?$/) || [];
+		opts = {
+			host: opts[2],
+			user: opts[1],
+			port: parseInt(opts[3], 10) || 22
+		};
+	}
+
+	return opts;
+};
+
+var isConnected = function(c) {
+	return c && c._sock && c._sock.readyState === 'open';
+};
+
+var connection = function(opts) {
+	opts = parse(opts);
+
 	var c = new Connection();
+	var key = opts.key === false ? undefined : opts.key || path.join(HOME, '.ssh', 'id_rsa');
+
+	var connect = function() {
+		c.connect({
+			host:opts.host,
+			username:opts.user,
+			password:opts.password,
+			port:opts.port || 22,
+			privateKey:key
+		});
+	};
+
+	if (!key || Buffer.isBuffer(key)) {
+		connect();
+	} else {
+		fs.readFile(key, function(_, buffer) {
+			key = buffer;
+			connect();
+		});
+	}
+
+	return c;
+};
+
+var exec = function(cmd, opts) {
+	if (opts instanceof Connection) return exec(cmd, {connection:opts});
+	opts = parse(opts);
+
 	var buffer = null;
 	var waiting = noop;
+	var c = opts.connection;
 
 	var duplex = stream.passThrough(noop, function(data, enc, callback) {
 		buffer = data;
 		waiting = callback;
 	});
 
-	c.on('ready', function() {
+	var onerror = function(err) {
+		duplex.emit('error', err);
+		duplex.destroy();
+	};
+
+	var onconnected = function() {
 		c.exec(cmd, {env:opts.env}, function(err, stdio) {
-			if (err) return c.emit('error', err);
+			if (err) return onerror(err);
 
 			var drained = true;
 			var update = function() {
@@ -66,54 +119,28 @@ var exec = function(cmd, opts) {
 			buffer = null;
 			waiting = noop;
 		});
-	});
-
-	c.on('error', function(err) {
-		duplex.emit('error', err);
-		duplex.destroy();
-	});
-
-	c.on('close', function() {
-		duplex.destroy();
-	});
-
-	duplex.on('close', function() {
-		c.end();
-	});
-
-	var key = opts.key === false ? undefined : opts.key || path.join(HOME, '.ssh', 'id_rsa');
-
-	var connect = function() {
-		c.connect({
-			host:opts.host,
-			username:opts.user,
-			password:opts.password,
-			port:opts.port || 22,
-			privateKey:key
-		});
 	};
 
-	if (!key || Buffer.isBuffer(key)) {
-		connect();
-	} else {
-		fs.readFile(key, function(_, buffer) {
-			key = buffer;
-			connect();
+	if (isConnected(c)) onconnected();
+	else if (c) c.on('ready', onconnected);
+	else {
+		c = connection(opts);
+
+		c.on('error', onerror);
+		c.on('ready', onconnected);
+
+		c.on('close', function() {
+			duplex.destroy();
+		});
+
+		duplex.on('close', function() {
+			c.end();
 		});
 	}
 
 	return duplex;
 };
 
-module.exports = function(cmd, opts) {
-	if (typeof opts === 'string') {
-		opts = opts.match(/^(?:([^@]+)@)?([^:]+)(?::(\d+))?$/) || [];
-		opts = {
-			host: opts[2],
-			user: opts[1],
-			port: parseInt(opts[3], 10) || 22
-		};
-	}
+exec.connection = connection;
 
-	return exec(cmd, opts);
-};
+module.exports = exec;
