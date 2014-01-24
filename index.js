@@ -31,12 +31,15 @@ var connection = function(opts) {
 	var key = opts.key === false ? undefined : opts.key || path.join(HOME, '.ssh', 'id_rsa');
 
 	var connect = function() {
+		if (key && key.toString().toLowerCase().indexOf('encrypted') > -1) key = null;
+
 		c.connect({
 			host:opts.host,
 			username:opts.user,
 			password:opts.password,
 			port:opts.port || 22,
-			privateKey:key
+			privateKey:key,
+			agent: process.env.SSH_AUTH_SOCK
 		});
 	};
 
