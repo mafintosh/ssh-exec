@@ -7,11 +7,17 @@
     "url": "git://github.com/mafintosh/ssh-exec.git"
   },
   "dependencies": {
-    "ssh2": "~0.2.14",
-    "stream-wrapper": "~0.1.2"
+    "duplexify": "^3.2.0",
+    "ssh2": "^0.4.6"
+  },
+  "devDependencies": {
+    "standard": "^3.5.0"
   },
   "bugs": {
     "url": "https://github.com/mafintosh/ssh-exec/issues"
+  },
+  "scripts": {
+    "test": "standard"
   },
   "homepage": "https://github.com/mafintosh/ssh-exec",
   "main": "index.js",
