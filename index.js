@@ -26,6 +26,10 @@ var exec = function (cmd, opts) {
   var key = opts.key === false ? undefined : opts.key || path.join(HOME, '.ssh', 'id_rsa')
   var fingerprint
 
+  client.on('error', function (err) {
+    stream.destroy(err)
+  })
+
   var connect = function () {
     if (key && key.toString().toLowerCase().indexOf('encrypted') > -1) key = null
 
