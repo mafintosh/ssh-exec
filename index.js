@@ -43,11 +43,18 @@ var exec = function (cmd, opts) {
       return false
     }
 
+    if (opts.password) {
+      client.on('keyboard-interactive', function (a, b, c, prompt, cb) {
+        cb([opts.password])
+      })
+    }
+
     client.connect({
       host: opts.host,
       username: opts.user,
       password: opts.password,
       port: opts.port || 22,
+      tryKeyboard: !!opts.password,
       privateKey: key,
       agent: process.env.SSH_AUTH_SOCK,
       hostHash: 'md5',
