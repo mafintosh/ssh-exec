@@ -69,6 +69,8 @@ var exec = function (cmd, opts) {
       stream.setWritable(stdio)
       stream.setReadable(stdio)
 
+      stream.emit('ready')
+
       stdio.stderr.setEncoding('utf-8')
       stdio.stderr.on('data', function (data) {
         stream.emit('warn', data)
