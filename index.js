@@ -2,6 +2,7 @@ var ssh2 = require('ssh2')
 var fs = require('fs')
 var path = require('path')
 var duplexify = require('duplexify')
+var once = require('once')
 
 var HOME = process.env.HOME || process.env.USERPROFILE
 
@@ -18,7 +19,7 @@ var parse = function (opts) {
   return opts
 }
 
-var exec = function (cmd, opts) {
+var exec = function (cmd, opts, cb) {
   opts = parse(opts)
 
   var stream = duplexify()
@@ -109,7 +110,28 @@ var exec = function (cmd, opts) {
     })
   }
 
+  if (cb) oncallback(stream, cb)
   return stream
+}
+
+var oncallback = function (stream, cb) {
+  cb = once(cb)
+
+  var stderr = ''
+  var stdout = ''
+
+  stream.setEncoding('utf-8')
+  stream.on('warn', function (data) {
+    stderr += data
+  })
+  stream.on('data', function (data) {
+    stdout += data
+  })
+
+  stream.on('error', cb)
+  stream.on('end', function () {
+    cb(null, stdout, stderr)
+  })
 }
 
 module.exports = exec

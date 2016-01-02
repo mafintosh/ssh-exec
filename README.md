@@ -35,6 +35,14 @@ process.stdin
   .pipe(process.stdout)
 ```
 
+Optionally there is a callback api as well
+
+``` js
+exec('ls -lh', 'ubuntu@my-remote.com', function (err, stdout, stderr) {
+  console.log(err, stdout, stderr)
+})
+```
+
 ## License
 
 MIT
