@@ -77,15 +77,13 @@ var exec = function (cmd, opts, cb) {
         stream.emit('warn', data)
       })
 
-      stdio.on('close', function () {
-        client.end()
-      })
-
       stdio.on('exit', function (code) {
         if (code !== 0) {
           stream.emit('error', code)
+        } else {
+          stream.emit('exit', code)
         }
-        stream.emit('exit', code)
+        client.end()
       })
     })
   }
@@ -134,7 +132,8 @@ var oncallback = function (stream, cb) {
   stream.on('error', function(code) {
     cb({code: code}, stdout, stderr)
   })
-  stream.on('end', function () {
+
+  stream.on('exit', function () {
     cb(null, stdout, stderr)
   })
 }
