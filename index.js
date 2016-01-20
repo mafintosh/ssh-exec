@@ -135,7 +135,7 @@ var oncallback = function (stream, cb) {
     cb({code: code}, stdout, stderr)
   })
 
-  stream.on('exit', function () {
+  stream.on('end', function () {
     cb(null, stdout, stderr)
   })
 }
