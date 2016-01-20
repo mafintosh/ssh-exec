@@ -131,8 +131,8 @@ var oncallback = function (stream, cb) {
     stdout += data
   })
 
-  stream.on('error', function(code) {
-    cb({code: code}, stdout, stderr)
+  stream.on('error', function(err) {
+    cb(err, stdout, stderr)
   })
 
   stream.on('end', function () {
