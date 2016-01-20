@@ -82,9 +82,8 @@ var exec = function (cmd, opts, cb) {
           var err = new Error('Non-zero exit code: ' + code)
           err.code = code
           stream.emit('error', err)
-        } else {
-          stream.emit('exit', code)
         }
+        stream.emit('exit', code)
         client.end()
       })
     })
@@ -124,9 +123,11 @@ var oncallback = function (stream, cb) {
   var stdout = ''
 
   stream.setEncoding('utf-8')
+
   stream.on('warn', function (data) {
     stderr += data
   })
+
   stream.on('data', function (data) {
     stdout += data
   })
