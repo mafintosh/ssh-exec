@@ -79,7 +79,9 @@ var exec = function (cmd, opts, cb) {
 
       stdio.on('exit', function (code) {
         if (code !== 0) {
-          stream.emit('error', code)
+          var err = new Error('Non-zero exit code: ' + code)
+          err.code = code
+          stream.emit('error', err)
         } else {
           stream.emit('exit', code)
         }
