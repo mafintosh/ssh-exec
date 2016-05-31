@@ -32,8 +32,6 @@ var exec = function (cmd, opts, cb) {
   })
 
   var connect = function () {
-    if (key && key.toString().toLowerCase().indexOf('encrypted') > -1) key = null
-
     var verifier = function (hash) {
       fingerprint = hash
 
@@ -53,11 +51,12 @@ var exec = function (cmd, opts, cb) {
     client.connect({
       host: opts.host,
       username: opts.user,
-      password: opts.password,
+      password: process.env.SSH_PASSWORD || opts.password,
+      passphrase: process.env.SSH_PASSPHRASE || opts.passphrase,
       port: opts.port || 22,
       tryKeyboard: !!opts.password,
       privateKey: key,
-      agent: process.env.SSH_AUTH_SOCK,
+      agent: process.env.SSH_AUTH_SOCK || opts.agent,
       hostHash: 'md5',
       hostVerifier: verifier
     })
