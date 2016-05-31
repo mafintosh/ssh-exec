@@ -40,7 +40,6 @@ var exec = function (cmd, opts, cb) {
       if (!opts.fingerprint) return true
       if (fingerprint === opts.fingerprint) return true
 
-      client.destroy(new Error('Host could not be verified'))
       return false
     }
 
