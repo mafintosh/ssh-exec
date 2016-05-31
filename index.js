@@ -55,9 +55,22 @@ var exec = function (cmd, opts, cb) {
       port: opts.port || 22,
       tryKeyboard: !!opts.password,
       privateKey: key,
+      allowAgentFwd: opts.allowAgentFwd,
       agent: process.env.SSH_AUTH_SOCK || opts.agent,
-      hostHash: 'md5',
-      hostVerifier: verifier
+      hostHash: opts.hostHash || 'md5',
+      hostVerifier: verifier,
+      localUsername: opts.localUsername,
+      localHostname: opts.localHostname,
+      forceIPv4: opts.forceIPv4,
+      forceIPv6: opts.forceIPv6,
+      keepaliveCountMax: opts.keepaliveCountMax,
+      keepaliveInterval: opts.keepaliveInterval,
+      algorithms: opts.algorithms,
+      compress: opts.compress,
+      strictVendor: opts.strictVendor,
+      readyTimeout: opts.readyTimeout,
+      timeout: opts.timeout,
+      sock: opts.sock
     })
   }
 
