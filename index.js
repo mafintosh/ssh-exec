@@ -31,6 +31,10 @@ var exec = function (cmd, opts, cb) {
     stream.destroy(err)
   })
 
+  client.on('timeout', function() {
+    stream.destroy(new Error('socket timeout'))
+  })
+
   var connect = function () {
     var verifier = function (hash) {
       fingerprint = hash
