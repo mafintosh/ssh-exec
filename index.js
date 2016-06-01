@@ -31,16 +31,17 @@ var exec = function (cmd, opts, cb) {
     stream.destroy(err)
   })
 
-  var connect = function () {
-    if (key && key.toString().toLowerCase().indexOf('encrypted') > -1) key = null
+  client.on('timeout', function() {
+    stream.destroy(new Error('socket timeout'))
+  })
 
+  var connect = function () {
     var verifier = function (hash) {
       fingerprint = hash
 
       if (!opts.fingerprint) return true
       if (fingerprint === opts.fingerprint) return true
 
-      client.destroy(new Error('Host could not be verified'))
       return false
     }
 
@@ -53,13 +54,27 @@ var exec = function (cmd, opts, cb) {
     client.connect({
       host: opts.host,
       username: opts.user,
-      password: opts.password,
+      password: process.env.SSH_PASSWORD || opts.password,
+      passphrase: process.env.SSH_PASSPHRASE || opts.passphrase,
       port: opts.port || 22,
       tryKeyboard: !!opts.password,
       privateKey: key,
-      agent: process.env.SSH_AUTH_SOCK,
-      hostHash: 'md5',
-      hostVerifier: verifier
+      allowAgentFwd: opts.allowAgentFwd,
+      agent: process.env.SSH_AUTH_SOCK || opts.agent,
+      hostHash: opts.hostHash || 'md5',
+      hostVerifier: verifier,
+      localUsername: opts.localUsername,
+      localHostname: opts.localHostname,
+      forceIPv4: opts.forceIPv4,
+      forceIPv6: opts.forceIPv6,
+      keepaliveCountMax: opts.keepaliveCountMax,
+      keepaliveInterval: opts.keepaliveInterval,
+      algorithms: opts.algorithms,
+      compress: opts.compress,
+      strictVendor: opts.strictVendor,
+      readyTimeout: opts.readyTimeout,
+      timeout: opts.timeout,
+      sock: opts.sock
     })
   }
 
