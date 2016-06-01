@@ -75,7 +75,7 @@ var exec = function (cmd, opts, cb) {
   }
 
   var run = function () {
-    client.exec(cmd, function (err, stdio) {
+    client.exec(cmd, opts.exec || {}, function (err, stdio) {
       if (err) return stream.destroy(err)
 
       stream.setWritable(stdio)
