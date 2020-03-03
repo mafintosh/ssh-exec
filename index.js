@@ -51,6 +51,7 @@ var exec = function (cmd, opts, cb) {
     }
 
     client.connect({
+      readyTimeout: opts.readyTimeout,
       host: opts.host,
       username: opts.user,
       password: opts.password,
