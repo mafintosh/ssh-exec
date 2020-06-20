@@ -8,7 +8,8 @@ It is available through npm
 npm install ssh-exec
 ```
 
-It is written in plain Javascript and uses [ssh2](https://github.com/mscdex/ssh2) for all the heavy lifting.
+It is written in plain JavaScript and uses [ssh2](https://github.com/mscdex/ssh2) for all the heavy lifting.
+
 
 ## Usage
 
@@ -43,6 +44,19 @@ exec('ls -lh', 'ubuntu@my-remote.com', function (err, stdout, stderr) {
 })
 ```
 
+
+## Requirements
+
+Node.js 8.17.x or later.
+
+
+## Note
+
+Nothing.
+
+
 ## License
 
 MIT
+
+----
